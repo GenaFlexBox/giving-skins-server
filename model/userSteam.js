@@ -22,7 +22,7 @@ const SteamUser = new mongoose.Schema({
   },
 
   photos: {
-    type: [],
+    type: String,
     requierd: true,
   },
 
@@ -39,6 +39,11 @@ const SteamUser = new mongoose.Schema({
     type: [],
     default: [], 
   },
+
+  sessionKey: {
+    type: String,
+    requierd: true,
+  }
 })
 
 export default mongoose.model('UserSteam', SteamUser)

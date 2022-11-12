@@ -1,20 +1,19 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const caseModel = new mongoose.Schema({
-
-  id_cases: {
-    type: Number,
-    requierd: true,
-  },
+    id_cases: {
+        type: Number,
+        requierd: true,
+    },
 
     name: {
-      type: String,
-      requierd: true,
+        type: String,
+        requierd: true,
     },
 
     price: {
-      type: Number,
-      requierd: true,
+        type: Number,
+        requierd: true,
     },
 
     priceSale: {
@@ -23,13 +22,23 @@ const caseModel = new mongoose.Schema({
 
     image: {
         type: String,
-        default: 'https://i.ibb.co/236JSxQ/the-recoil-case.png',
+        default: "https://i.ibb.co/236JSxQ/the-recoil-case.png",
     },
 
     items: {
-      type: [],
-      default: []
-    }
-})
+        type: [],
+        default: [],
+    },
 
-export default mongoose.model('CaseModel', caseModel)
+    quota: {
+        type: Number,
+        default: 5000,
+    },
+
+    openCase: {
+        type: Number,
+        default: 0
+    }
+});
+
+export default mongoose.model("CaseModel", caseModel);

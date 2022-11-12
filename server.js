@@ -8,23 +8,23 @@ import http  from "http"
 import 'dotenv/config'
 import passport from "passport"
 import passportSteam from 'passport-steam'
-
-
 import router from "./routers/index.js";
 import errorMiddleware from "./middleware/error-middleware.js";
-import userSteam from "./model/userSteam.js";
 import userController from "./controllers/user-controller.js";
 
-const PORT = process.env.PORT || 5000
+const PORT = process.env.PORT || 5000;
+
 const app = express();
+const SteamStrategy = passportSteam.Strategy
 const httpServer = http.createServer(app);
+
 const io = new Server(httpServer, {
   cors: {
     origin: "http://localhost:3000",
     methods: ["GET", "POST"]
   }
 })
-const SteamStrategy = passportSteam.Strategy
+
 passport.serializeUser((user, done) => {
   done(null, user);
  });
@@ -33,15 +33,19 @@ passport.deserializeUser((user, done) => {
   done(null, user);
 });
 
-passport.use(new SteamStrategy({
-  returnURL: 'http://localhost:5000' + '/api/auth/steam/return',
-  realm: 'http://localhost:5000' + '/',
-  apiKey: '9929C73FDB244A3B7C60D880D19F88EE'
-  }, function (identifier, profile, done) {
-   process.nextTick(function () {
-    profile.identifier = identifier;
-    return done(null, profile);
-   });
+passport.use(new SteamStrategy(
+  {
+    returnURL: 'http://localhost:5000' + '/api/auth/steam/return',
+    realm: 'http://localhost:5000' + '/',
+    apiKey: process.env.API_KEY
+  },
+
+    function (identifier, profile, done) {
+
+    process.nextTick(function () {
+      profile.identifier = identifier;
+      return done(null, profile);
+    });
   }
  ));
 
@@ -58,19 +62,20 @@ app.use(cookieParser());
 app.use('/api', router);
 
 app.use(session({
-  name: 'name of session id',
-  secret: 'Whatever_You_Want',
+  name: 'sessionAuth',
+  secret: process.env.SECRET_KEY_SESSION,
   saveUninitialized: true,
   resave: false,
   cookie: {
-   maxAge: 3600000
+    maxAge: 3600000
   }
- }))
+}))
+
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(errorMiddleware);
 
-app.get('/', userController.loginSt); 
+app.get('/', userController.loginSteam); 
 
 app.get('/api/auth/steam', passport.authenticate('steam', {failureRedirect: '/'}), function (req, res) {
   res.redirect('/')
@@ -80,26 +85,12 @@ app.get('/api/auth/steam/return', passport.authenticate('steam', {failureRedirec
   res.redirect('/')
 });
 
-mongoose.connect('mongodb+srv://admin:admin@cluster0.xmyb5.mongodb.net/blog?retryWrites=true&w=majority').then(() => console.log('MongoDB OK')).catch((err) => console.log('DB error', err))
-//Авторизация
-//app.post('/auth/login',  UserControllers.login)
-//Регистрация
-//app.post('/auth/register', registerValidation, UserControllers.registration )
-//Информация о user
+mongoose.connect('mongodb+srv://admin:admin@cluster0.xmyb5.mongodb.net/blog?retryWrites=true&w=majority').then(() => console.log('MongoDB is connected')).catch((err) => console.log('DB error', err))
 
 httpServer.listen(PORT, (err) => {
   if (err) {
     return console.log(err);
   }
 
-  console.log(`Server OK ${PORT}`);
+  console.log(`The server is running in ${PORT} port`);
 })
-
-const tabel = new Map();
-
-//app.use('/api/users')
-//app.use(notFound);
-//app.use(errorHandeler);
-//const port = process.env.PORT || 5000;
-//httpServer.listen(port, console.log(`Server is running on the port ${port}`))
-

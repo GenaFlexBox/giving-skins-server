@@ -6,68 +6,7 @@ import caseService from "../config/case-service.js";
 
 class UserController {
 
-  async registration(req, res, next) {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return next(ApiError.BadRequest('Ошибка при валидации', errors.array()))
-      }
-
-      const {email, name, password} = req.body;
-      const userData = await userService.registration(email, name, password)
-      res.cookie('refreshToken', userData.refreshToken, {maxAge: 30 * 24 * 60 * 60 *1000, httpOnly: true,})
-
-      return res.json(userData);
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async login(req, res, next) {
-    try {
-      const {email, password} = req.body;
-      const userData = await userService.login(email, password);
-      res.cookie('refreshToken', userData.refreshToken, {maxAge: 30 * 24 * 60 * 60 *1000, httpOnly: true,})
-
-      return res.json(userData);
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async activate(req, res, next) {
-    try {
-      const activationLink = req.params.link;
-      await userService.activate(activationLink);
-      return res.redirect(process.env.CLIENT_URL);
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async refresh(req, res, next) {
-    try {
-      const { refreshToken } = req.cookies;
-      const userData = await userService.refresh(refreshToken);
-      res.cookie('refreshToken', userData.refreshToken, {maxAge: 30 * 24 * 60 * 60 *1000, httpOnly: true,})
-
-      return res.json(userData);
-      
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async logout(req, res, next) {
-    try {
-      const {steamID} = req.cookies;
-      console.log(steamID, 'cookie');
-      res.clearCookie('steamID');
-      return res.json()
-    } catch (error) {
-      next(error);
-    }
-  }
+  
 
   async getUsers(req, res, next) {
     try {
@@ -78,12 +17,32 @@ class UserController {
     }
   }
 
-  async loginSt(req, res, next) {
+  async loginSteam(req, res, next) {
     try {
       const steamData = req.user;
-      const userData = await userService.loginSteam(steamData);
-      res.cookie('steamID', userData.user.steamID, {maxAge: 30 * 24 * 60 * 60 *1000, httpOnly: true,})
-      return res.redirect('http://localhost:3000')
+      const cookieHeader = req.cookies.sessionAuth;
+
+      const userData = await userService.loginSteam(steamData, cookieHeader);
+
+      res.cookie('sessionAuth', cookieHeader, {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true});
+
+      return res.redirect('http://localhost:3000');
+
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async logout(req, res, next) {
+    
+    try {
+      res.clearCookie('sessionAuth');
+
+
+      return res.json({
+        logout: true
+      });
+
     } catch (error) {
       next(error);
     }
@@ -91,8 +50,8 @@ class UserController {
 
   async getUser(req, res, next) {
     try {
-      const { steamID } = req.cookies;
-      const user = await userService.getUserData(steamID);
+      const { sessionAuth } = req.cookies;
+      const user = await userService.getUserData(sessionAuth);
       res.json(user);
     } catch (error) {
       //next(error)
@@ -147,6 +106,27 @@ class UserController {
     try {
       const casesData = await caseService.getAllCases();
       res.json(casesData);
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async getCasesItem(req, res, next) {
+    const {id} = req.params
+    try {
+      const casesData = await caseService.getCase(id);
+      res.json(casesData);
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  async openCase(req, res, next) {
+    const {id} = req.params
+    const {user} = req.body
+    try {
+      const casesOpen = await caseService.openCase(user, id);
+      res.json(casesOpen);
     } catch (error) {
       next(error)
     }
